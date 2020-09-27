@@ -1,0 +1,103 @@
+﻿@model PagedList.IPagedList<WebAppFirst.Models.Orders>
+@using PagedList.Mvc;
+<link href="~/Content/PagedList.css" rel="stylesheet" type="text/css" />
+
+@{
+    ViewBag.Title = "TilausOtsikot";
+}
+
+@section scripts{
+    <script type="text/javascript">
+        $(function () {
+            $(".showOrderClass").click(function () {
+                let orderId = $(this).data("orderid");
+                // alert("Klikkasit tilausnumeroa: " + orderId);
+                var url = "/Orders2/_TilausRivit/?OrderID=" + orderId;
+                $("#orderDetails_" + orderId).append(" <b>Ladataan tilauksen " + orderId + " rivejä...</b>");
+                var $detailDiv = $("#orderDetails_" + orderId);
+                console.log(url);
+                console.log($detailDiv);
+                $.get(url, function (data) {
+                    $detailDiv.replaceWith(data);
+                });
+            });
+        });
+    </script>
+}
+
+
+<h2>TilausOtsikot</h2>
+
+@using (Html.BeginForm("TilausOtsikot", "Orders2", FormMethod.Get))
+{
+    <div class="input-group">
+        <p class="px-1">@Html.Label("Find by:")</p>
+        <p class="px-1">@Html.TextBox("SearchString1", ViewBag.currentFilter1 as string, new { placeholder = "Customer", @class = "form-control" })</p>
+        <p class="px-1">@Html.TextBox("SearchString2", ViewBag.currentFilter2 as string, new { placeholder = "City", @class = "form-control" })</p>
+        <p class="px-1">@Html.TextBox("SearchString3", ViewBag.currentFilter3 as string, new { placeholder = "Shipper", @class = "form-control" })</p>
+        <p class="px-1"><input type="submit" value="Search" class="form-control" /></p>
+    </div>
+    
+}
+
+<p>
+    @*@Html.ActionLink("Create New", "Create")*@
+</p>
+
+
+<div class="container-fluid">
+
+    <div class="card-header">
+        <a class="card-link">
+            <form>
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text bg-warning font-weight-bold">Order</span>
+                    </div>
+                    <input type="text" class="form-control bg-warning font-weight-bold px2" value="Customer" disabled>
+                    <input type="text" class="form-control bg-warning font-weight-bold px2" value="ShipName" disabled>
+                    <input type="text" class="form-control bg-warning font-weight-bold px2" value="ShipAddress" disabled>
+                    <input type="text" class="form-control bg-warning font-weight-bold px2" value="ShipCity" disabled>
+                    <input type="text" class="form-control bg-warning font-weight-bold px2" value="ShipCountry" disabled>
+                    <input type="text" class="form-control bg-warning font-weight-bold px2" value="ShipRegion" disabled>
+                    <input type="text" class="form-control bg-warning font-weight-bold px2" value="Shipper" disabled>
+                </div>
+            </form>
+        </a>
+    </div>
+
+    <div id="accordion">
+        @foreach (var item in Model)
+        {
+            <div class="card">
+                <div class="card-header">
+                    <a class="card-link showOrderClass" data-orderid="@item.OrderID" data-toggle="collapse" href="#collapse_@item.OrderID">
+                        <form>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">@item.OrderID</span>
+                                </div>
+                                <input type="text" class="form-control px-2" value="@item.Customers.CompanyName" disabled>
+                                <input type="text" class="form-control px-2" value="@item.ShipName" disabled>
+                                <input type="text" class="form-control px-2" value="@item.ShipAddress" disabled>
+                                <input type="text" class="form-control px-2" value="@item.ShipCity" disabled>
+                                <input type="text" class="form-control px-2" value="@item.ShipCountry" disabled>
+                                <input type="text" class="form-control px-2" value="@item.ShipRegion" disabled>
+                                <input type="text" class="form-control px-2" value="@item.Shippers.CompanyName" disabled>
+                            </div>
+                        </form>
+                    </a>
+                </div>
+                <div id="collapse_@item.OrderID" class="collapse" data-parent="#accordion">
+                    <div class="card-body">
+                        <div id="orderDetails_@item.OrderID"></div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    <br>
+    Page @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber) of @Model.PageCount
+
+    @Html.PagedListPager(Model, page => Url.Action("TilausOtsikot", new { page, currentFilter1 = ViewBag.currentFilter1, currentFilter2 = ViewBag.currentFilter2, currentFilter3 = ViewBag.currentFilter3 }))
+</div>

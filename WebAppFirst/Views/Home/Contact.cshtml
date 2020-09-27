@@ -1,0 +1,21 @@
+﻿@{
+    ViewBag.Title = "Contact";
+}
+<h2>@ViewBag.Title.</h2>
+<h3>@ViewBag.Message</h3>
+
+<address>
+    Pöljäntie 18<br />
+    54500 Taavetti<br />
+    <abbr title="Phone">P:</abbr>
+    050-124567
+</address>
+
+<address>
+    <strong>Support:</strong>   <a href="mailto:Support@NWTaavetti.com">Support@NWTaavetti.com</a><br />
+    <strong>Marketing:</strong> <a href="mailto:Marketing@NWTaavetti.com">Marketing@NWTaavetti.com</a>
+</address>
+
+@{
+    Html.RenderPartial("_LoginModal");
+}

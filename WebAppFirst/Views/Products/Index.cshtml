@@ -1,0 +1,155 @@
+﻿@model PagedList.IPagedList<WebAppFirst.Models.Products>
+@using PagedList.Mvc;
+<link href="~/Content/PagedList.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css">
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<!-- Alla JQuery-->
+@section scripts
+    {
+    <script type="text/javascript">
+        $("#singleSelectedCategoryID").on("change", function () {
+            // getting value
+            var selValue = $("#singleSelectedCategoryID").val();
+            document.getElementById("ProductCategory").value = selValue;
+        });
+
+
+
+        $(function () {
+            $(".getProductName").click(function () {
+                let productName = $(this).data("productname");
+                drawLineChart(productName);
+            })
+        });
+
+
+        function drawLineChart(productName) {
+            let url = "/Products/_ProductSalesPerDate/?productName=" + productName;
+            var jsonData = $.ajax({
+                url: url,
+                dataType: 'json',
+            }).done(function (results) {
+                console.log(results);
+                // split timestamp and data into separate arrays
+                var salesLabels = [], salesData = [];
+                for (let i = 0; i < results.length; i++) {
+                    salesData.push(results[i].DailySales);
+                    salesLabels.push(results[i].OrderDate);
+                }
+                renderChart(salesData, salesLabels, productName);
+            });
+        }
+
+
+        function renderChart(dataValues, labelTexts, productName) {
+            var ctx = document.getElementById('barcanvas').getContext('2d');
+            var barcanvas = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labelTexts,
+                    datasets: [{
+                        label: 'Daily product sales for ' + productName,
+                        data: dataValues,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.2)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                stepSize: 100
+                            }
+                        }]
+                    }
+                }
+            });
+            $('#ProductSalesPerDateModal').modal('show');
+        }
+
+
+    </script>
+}
+
+
+<h2>Index</h2>
+
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+
+@using (Html.BeginForm("Index", "Products", FormMethod.Get))
+{
+    <div class="input-group">
+        <p class="px-1">@Html.Label("Find by name:")</p>
+        <p class="px-1">@Html.TextBox("SearchString1", ViewBag.currentFilter1 as string, new { @class = "form-control" })</p>
+        <p class="px-1">@Html.Label("Find by product category:")</p>
+        <p class="px-1">@Html.Hidden("ProductCategory", ViewBag.currentFilter1 as string, new { @id = "ProductCategory", @class = "form-control" })</p>
+        <p class="px-1">@Html.DropDownList("CategoryID", null, htmlAttributes: new { @id = "singleSelectedCategoryID", @class = "form-control" })</p>
+        <p class="px-1"><input type="submit" value="Search" class="form-control" /></p>
+    </div>
+  
+}
+
+<div class="table-responsive">
+    <table class="table">
+        <tr>
+            <th></th>
+            <th>@Html.ActionLink("Product name", "Index", new { sortOrder = ViewBag.ProductNameSortParm, currentFilter1 = ViewBag.currentFilter1, currentProductCategory = ViewBag.currentProductCategory })</th> @*Kutsuu controlleria ja sen index metodia ja lähettää sille parametrin lajittelujärjestys. Controller palauttaa lajittejärjestyksen arvon *@
+            <th>QuantityPerUnit</th>
+            <th>@Html.ActionLink("Price", "Index", new { sortOrder = ViewBag.UnitPriceSortParm, currentFilter1 = ViewBag.currentFilter1, currentProductCategory = ViewBag.currentProductCategory })</th> @*Sama kuinm yllä. Sortorder voi olla unitpricen tai nimen mukainen    *@
+            <th>UnitsInStock</th>
+            <th>UnitsOnOrder</th>
+            <th>ReorderLevel</th>
+            <th>Discontinued</th>
+            <th>ImageLink</th>
+            <th>CategoryName</th>
+            <th>CompanyName</th>
+            <th></th>
+        </tr>
+
+
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td><button class="btn-dark getProductName fas fa-chart-bar" style="border-radius: 4px," data-productname="@item.ProductName"></button></td>
+                <td>@Html.DisplayFor(modelItem => item.ProductName)</td>
+                <td>@Html.DisplayFor(modelItem => item.QuantityPerUnit)</td>
+                <td>@Html.DisplayFor(modelItem => item.UnitPrice)</td>
+                <td>@Html.DisplayFor(modelItem => item.UnitsInStock)</td>
+                <td>@Html.DisplayFor(modelItem => item.UnitsOnOrder)</td>
+                <td>@Html.DisplayFor(modelItem => item.ReorderLevel)</td>
+                <td>@Html.DisplayFor(modelItem => item.Discontinued)</td>
+                <td>@Html.DisplayFor(modelItem => item.ImageLink)</td>
+                <td>@Html.DisplayFor(modelItem => item.Categories.CategoryName)</td>
+                <td>@Html.DisplayFor(modelItem => item.Suppliers.CompanyName)</td>
+                <td>
+                    @Html.ActionLink("Edit", "Edit", new { id = item.ProductID }) |
+                    @Html.ActionLink("Details", "Details", new { id = item.ProductID }) |
+                    @Html.ActionLink("Delete", "Delete", new { id = item.ProductID })
+                </td>
+            </tr>
+        }
+
+    </table>
+    <br />
+
+    Page @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber) of @Model.PageCount
+
+    @Html.PagedListPager(Model, page => Url.Action("Index", new { page, sortOrder = ViewBag.CurrentSort, currentFilter1 = ViewBag.currentFilter1, currentProductCategory = ViewBag.currentProductCategory }))
+
+    @{
+        Html.RenderPartial("_ProductSalesPerDate");
+    }
+</div>
+
